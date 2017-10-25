@@ -8,13 +8,68 @@ Created on Fri Oct 20 18:10:47 2017
 
 import numpy as np
 import random
-from scipy.spatial import distance
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 
 def isEqual(centroids,new_centroids):
     for i in range(len(centroids)):
         if np.linalg.norm(new_centroids[i]-centroids[i]) != 0:
             return False;
     return True;
+
+
+def calcExtIndex(clusters):
+    cluster_matrix = np.zeros((no_genes,no_genes))
+    for i in range(0,no_genes):
+        for j in range(0,no_genes):
+            if clusters[i] == clusters[j]:
+                cluster_matrix[i][j] = 1
+                              
+    truth_matrix = np.zeros((no_genes,no_genes))
+    for i in range(0,no_genes):
+        for j in range(0,no_genes):
+            if ground_truth[i] == ground_truth[j]:
+                truth_matrix[i][j] = 1
+    
+    agree_disagree = np.zeros((2,2))
+    
+    for i in range(0,no_genes):
+        for j in range(0,no_genes):
+            if truth_matrix[i][j] ==  cluster_matrix[i][j]:
+                if  truth_matrix[i][j] == 1:
+                    agree_disagree[0][0] += 1
+                else:
+                    agree_disagree[1][1] += 1
+            else:
+                if truth_matrix[i][j] == 1:
+                    agree_disagree[0][1] += 1
+                else:
+                    agree_disagree[1][0] += 1
+                    
+    jaccard = agree_disagree[0][0]/(agree_disagree[0][0]+agree_disagree[1][0]+agree_disagree[0][1])
+    rand = (agree_disagree[0][0]+agree_disagree[1][1])/(agree_disagree[0][0]+agree_disagree[1][0]+agree_disagree[0][1]+agree_disagree[1][1])
+
+    return jaccard, rand
+
+
+def generatePlot(clusterList):
+    pca = PCA(n_components=2)
+    pca.fit(points)
+    reducedPoints = pca.transform(points)
+    
+    fig_size = plt.rcParams["figure.figsize"]
+     
+    # Set figure width to 12 and height to 9
+    fig_size[0] = 12
+    fig_size[1] = 9
+    plt.rcParams["figure.figsize"] = fig_size
+    
+    plt.scatter(reducedPoints[:, 0], reducedPoints[:, 1], c=clusterList, alpha=0.5)
+    plt.title('K - Means Clustering')
+    plt.grid(True)
+    plt.show()
+
+
 
 #Read file and store into a 2d array
 with open("cho.txt") as textFile:
@@ -61,9 +116,6 @@ while True:
         no_points[clusters[i]] += 1
         
     
-    #print(new_centroids)
-    #print(no_points)
-    
     for i in range(0,k):
         for j in range(0,no_attr):
             new_centroids[i][j] /= no_points[i]
@@ -72,39 +124,11 @@ while True:
         break
     else:
         centroids = new_centroids
-    #print(centroids)
+    
 
-#print(np.shape(clusters))
-cluster_matrix = np.zeros((no_genes,no_genes))
-for i in range(0,no_genes):
-    for j in range(0,no_genes):
-        if clusters[i] == clusters[j]:
-            cluster_matrix[i][j] = 1
-                          
-truth_matrix = np.zeros((no_genes,no_genes))
-for i in range(0,no_genes):
-    for j in range(0,no_genes):
-        if ground_truth[i] == ground_truth[j]:
-            truth_matrix[i][j] = 1
+jaccard , rand = calcExtIndex(clusters)
+generatePlot(clusters)
 
-agree_disagree = np.zeros((2,2))
-#print(agree_disagree)
-count = 0
-for i in range(0,no_genes):
-    for j in range(0,no_genes):
-        if truth_matrix[i][j] ==  cluster_matrix[i][j]:
-            if  truth_matrix[i][j] == 1:
-                agree_disagree[0][0] += 1
-            else:
-                agree_disagree[1][1] += 1
-        else:
-            if truth_matrix[i][j] == 1:
-                agree_disagree[0][1] += 1
-            else:
-                agree_disagree[1][0] += 1
 
-#print(agree_disagree)
-
-#jaccard = agree_disagree[0][0]/(agree_disagree[0][0]+agree_disagree[1][0]+agree_disagree[0][1])
-rand = (agree_disagree[0][0]+agree_disagree[1][1])/(agree_disagree[0][0]+agree_disagree[1][0]+agree_disagree[0][1]+agree_disagree[1][1])
-print(rand)
+print("Jaccard = ", jaccard)
+print("Rand = " ,rand)

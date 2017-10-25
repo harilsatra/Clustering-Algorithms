@@ -9,6 +9,7 @@ Created on Sun Oct 22 19:44:26 2017
 import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances
 
+
 noise = []
 def dbScan(points, eps, min_pts, dist_mat, cluster, visited):
     global noise
@@ -45,6 +46,59 @@ def regionQuery(point, eps, dist_mat,no_genes):
             neighbors.add(i)
     return neighbors
 
+def calcExtIndex(cluster):
+    cluster_matrix = np.zeros((no_genes,no_genes))
+    for i in range(0,no_genes):
+        for j in range(0,no_genes):
+            if cluster[i] == cluster[j]:
+                cluster_matrix[i][j] = 1
+                              
+    truth_matrix = np.zeros((no_genes,no_genes))
+    for i in range(0,no_genes):
+        for j in range(0,no_genes):
+            if ground_truth[i] == ground_truth[j]:
+                truth_matrix[i][j] = 1
+    
+                
+    agree_disagree = np.zeros((2,2))
+    #print(agree_disagree)
+    count = 0
+    for i in range(0,no_genes):
+        for j in range(0,no_genes):
+            if truth_matrix[i][j] ==  cluster_matrix[i][j]:
+                if  truth_matrix[i][j] == 1:
+                    agree_disagree[0][0] += 1
+                else:
+                    agree_disagree[1][1] += 1
+            else:
+                if truth_matrix[i][j] == 1:
+                    agree_disagree[0][1] += 1
+                else:
+                    agree_disagree[1][0] += 1
+
+
+
+    jaccard = agree_disagree[0][0]/(agree_disagree[0][0]+agree_disagree[1][0]+agree_disagree[0][1])
+    rand = (agree_disagree[0][0]+agree_disagree[1][1])/(agree_disagree[0][0]+agree_disagree[1][0]+agree_disagree[0][1]+agree_disagree[1][1])
+
+    return jaccard,rand
+
+def generatePlot(clusterList):
+    pca = PCA(n_components=2)
+    pca.fit(points)
+    reducedPoints = pca.transform(points)
+    
+    fig_size = plt.rcParams["figure.figsize"]
+     
+    # Set figure width to 12 and height to 9
+    fig_size[0] = 12
+    fig_size[1] = 9
+    plt.rcParams["figure.figsize"] = fig_size
+    
+    plt.scatter(reducedPoints[:, 0], reducedPoints[:, 1], c=clusterList, alpha=0.5)
+    plt.title('Hierarchical Agglomerative Clustering')
+    plt.grid(True)
+    plt.show()
 
 
 
@@ -69,46 +123,13 @@ cluster = np.zeros((no_genes,1))
 visited = np.zeros((no_genes,1))
     
 
-eps=1.1
+eps=1.03
 min_pts=4
 dbScan(points, eps, min_pts, dist_mat, cluster, visited)
 
-#print(np.shape(clusters))
-cluster_matrix = np.zeros((no_genes,no_genes))
-for i in range(0,no_genes):
-    for j in range(0,no_genes):
-        if cluster[i] == cluster[j]:
-            cluster_matrix[i][j] = 1
-                          
-truth_matrix = np.zeros((no_genes,no_genes))
-for i in range(0,no_genes):
-    for j in range(0,no_genes):
-        if ground_truth[i] == ground_truth[j]:
-            truth_matrix[i][j] = 1
+jaccard, rand = calcExtIndex(cluster)
 
-            
-agree_disagree = np.zeros((2,2))
-#print(agree_disagree)
-count = 0
-for i in range(0,no_genes):
-    for j in range(0,no_genes):
-        if truth_matrix[i][j] ==  cluster_matrix[i][j]:
-            if  truth_matrix[i][j] == 1:
-                agree_disagree[0][0] += 1
-            else:
-                agree_disagree[1][1] += 1
-        else:
-            if truth_matrix[i][j] == 1:
-                agree_disagree[0][1] += 1
-            else:
-                agree_disagree[1][0] += 1
+generatePlot(cluster)
 
-#print(agree_disagree)
-
-#jaccard = agree_disagree[0][0]/(agree_disagree[0][0]+agree_disagree[1][0]+agree_disagree[0][1])
-rand = (agree_disagree[0][0]+agree_disagree[1][1])/(agree_disagree[0][0]+agree_disagree[1][0]+agree_disagree[0][1]+agree_disagree[1][1])
-print(rand)
-count = set()
-for i in range(0,len(cluster)):
-    count.add(cluster[i][0])
-print(len(count))
+print("Jaccard = ",jaccard)
+print("Rand = ",rand)
