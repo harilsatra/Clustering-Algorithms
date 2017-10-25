@@ -25,18 +25,20 @@ public class Kmeans{
   public static int no_genes = 0;
   
   // Function to read the data and choose the inital clusters from all the points.
-  public static void readData(String filename){
+  public static void readData(String filepath){
     try {
       // Read data from the file and generate the points matrix.
-      BufferedReader br = new BufferedReader(new FileReader(filename));
+      Path pt = new Path(filepath);
+      FileSystem fs = FileSystem.get(new Configuration());
+      BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(pt)));
       String sCurrentLine;
       while ((sCurrentLine = br.readLine()) != null) {
-	       String[] line_split = sCurrentLine.split("\t"); 
-	       ArrayList<Float> row = new ArrayList<Float>();
-	       ground_truth.add(Float.valueOf(line_split[1]));
-	       for(int j=2; j<line_split.length; j++){
-	         row.add(Float.valueOf(line_split[j].trim()));
-	       }
+         String[] line_split = sCurrentLine.split("\t"); 
+         ArrayList<Float> row = new ArrayList<Float>();
+         ground_truth.add(Float.valueOf(line_split[1]));
+         for(int j=2; j<line_split.length; j++){
+           row.add(Float.valueOf(line_split[j].trim()));
+         }
          points.add(row);
       }
       no_genes = points.size();
@@ -82,10 +84,10 @@ public class Kmeans{
     int index = -1;
     if(id != -1){
       for(int i=0; i<k; i++){
-	if(dist.get(id).get(i) < min){
-	  min = dist.get(id).get(i);
-	  index = i;
-	}
+        if(dist.get(id).get(i) < min){
+          min = dist.get(id).get(i);
+          index = i;
+        }
       }
       cluster_map.add(id,(float)index);
     }
@@ -187,12 +189,12 @@ public class Kmeans{
   
   // The Reduce class which contains the reduce function
   public static class ClusterReducer
-	extends Reducer<IntWritable,IntWritable,IntWritable,Text> {
+  extends Reducer<IntWritable,IntWritable,IntWritable,Text> {
     private Text result = new Text();
     
     // The reduce function which takes output emitted by the mapper as the input, combined as per the key on its way from the mapper.
     public void reduce(IntWritable key, Iterable<IntWritable> values, Context context
-		      ) throws IOException, InterruptedException {
+          ) throws IOException, InterruptedException {
       // Initialize the new centroid of the cluster to 0.
       ArrayList<Float> temp_centroid = new ArrayList<Float>();
       for(int i=0; i<points.get(0).size();i++){
@@ -258,7 +260,19 @@ public class Kmeans{
       // Check if the old centroids are the same as the new computed centroids.
       if(centroid.equals(new_centroid)){
         // If they are the same, calculate the jaccard index and break out of the infinite loop.
-        System.out.println(jaccard());
+        System.out.println("JACCARD: "+jaccard());
+        System.out.println();
+        // Display the Cluster id, Centroid and all the genes in that cluster. Do this for all the final clusters.
+        for(int i=0; i<k; i++){
+          System.out.println("CLUSTER ID: "+i);
+          System.out. println("CENTROID: "+new_centroid.get(i).toString());
+          for(int j=0; j<cluster_map.size(); j++){
+            if(Float.compare(cluster_map.get(j),(float)i)==0){
+              System.out.print(j+" ");
+            }
+          }
+          System.out.println("\n");
+        }
         break;
       }
       else{ // else update the centroids with new centroids and continue with the lopp.
