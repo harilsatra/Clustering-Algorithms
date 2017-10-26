@@ -8,6 +8,8 @@ Created on Sun Oct 22 19:44:26 2017
 
 import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 
 
 noise = []
@@ -23,6 +25,7 @@ def dbScan(points, eps, min_pts, dist_mat, cluster, visited):
             else:
                 c = c+1
                 expandCluster(i, neighbors, c, eps, min_pts, cluster, visited,no_genes)
+    return c
             
 def expandCluster(point, neighbors, c, eps, min_pts, cluster, visited,no_genes):
     cluster[point] = c
@@ -35,9 +38,7 @@ def expandCluster(point, neighbors, c, eps, min_pts, cluster, visited,no_genes):
                 neighbors.update(new_neighbors)
         if cluster[i][0] == 0:
             cluster[i][0] = c
-    return
-                
-            
+               
                    
 def regionQuery(point, eps, dist_mat,no_genes):
     neighbors = set()
@@ -62,7 +63,6 @@ def calcExtIndex(cluster):
                 
     agree_disagree = np.zeros((2,2))
     #print(agree_disagree)
-    count = 0
     for i in range(0,no_genes):
         for j in range(0,no_genes):
             if truth_matrix[i][j] ==  cluster_matrix[i][j]:
@@ -83,28 +83,41 @@ def calcExtIndex(cluster):
 
     return jaccard,rand
 
-def generatePlot(clusterList):
+def generatePlot(clusterList, count_clusters):
     pca = PCA(n_components=2)
     pca.fit(points)
     reducedPoints = pca.transform(points)
     
+    labels = []
+    for i in range(0,count_clusters+1):
+        labels.append(i)
+
+    colors = [plt.cm.jet(float(i)/(max(labels))) for i in labels]
+    
+    for i, l in enumerate(labels):
+       # plot_list = [(plt.plot(plot_dict_x[l],plot_dict_y[l],'+', c = plt.cm.jet(float(i)/(len(labels))), label = str(l)))]
+       x = [reducedPoints[j][0] for j in range(len(reducedPoints)) if int(clusterList[j]) == (l)]
+       y = [reducedPoints[j][1] for j in range(len(reducedPoints)) if int(clusterList[j]) == (l)]
+       plt.plot(x, y,'wo', c= colors[i], label = str(l), markersize=9, alpha=0.75)
+       
+      
+    
     fig_size = plt.rcParams["figure.figsize"]
-     
     # Set figure width to 12 and height to 9
     fig_size[0] = 12
     fig_size[1] = 9
     plt.rcParams["figure.figsize"] = fig_size
     
-    plt.scatter(reducedPoints[:, 0], reducedPoints[:, 1], c=clusterList, alpha=0.5)
-    plt.title('Hierarchical Agglomerative Clustering')
+    #plt.scatter(reducedPoints[:, 0], reducedPoints[:, 1], c=clusterList, alpha=0.5)
+    plt.title('Density Based Clustering')
+    plt.legend(numpoints=1)
     plt.grid(True)
     plt.show()
 
 
-
-
 #Read file and store into a 2d array
-with open("cho.txt") as textFile:
+filename = input("Enter the filename with extension: ")
+with open(filename) as textFile:
     lines = [line.split() for line in textFile]
     
 #Convert 2d array into np array    
@@ -123,13 +136,15 @@ cluster = np.zeros((no_genes,1))
 visited = np.zeros((no_genes,1))
     
 
-eps=1.03
-min_pts=4
-dbScan(points, eps, min_pts, dist_mat, cluster, visited)
-
+eps=input("Enter the value of neighborhood radius(eps): ")
+eps = float(eps)
+min_pts=input("Enter the minimum points in neighborhood: ")
+min_pts = int(min_pts)
+c = dbScan(points, eps, min_pts, dist_mat, cluster, visited)
 jaccard, rand = calcExtIndex(cluster)
 
-generatePlot(cluster)
+generatePlot(cluster,c)
 
-print("Jaccard = ",jaccard)
-print("Rand = ",rand)
+print("JACCARD = ",jaccard)
+print("RAND = ",rand)
+

@@ -11,13 +11,14 @@ import random
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
+# Function to check if the old centroids and new  centroids are equal
 def isEqual(centroids,new_centroids):
     for i in range(len(centroids)):
         if np.linalg.norm(new_centroids[i]-centroids[i]) != 0:
             return False;
     return True;
 
-
+# Generate Incidence Matrices from the ground truth and the cluster results that we get.
 def calcExtIndex(clusters):
     cluster_matrix = np.zeros((no_genes,no_genes))
     for i in range(0,no_genes):
@@ -31,6 +32,22 @@ def calcExtIndex(clusters):
             if ground_truth[i] == ground_truth[j]:
                 truth_matrix[i][j] = 1
     
+    """ Generate the agree_disagree matrix as follows:
+    A pair of data object (Oi,Oj) falls into one of the following categories 
+    M11 :  Cij=1 and Pij=1;  (agree)
+    M00 : Cij=0 and Pij=0;   (agree)
+    M10 :  Cij=1 and Pij=0;  (disagree)
+    M01 :  Cij=0 and Pij=1;  (disagree)
+    ----------------------------------------------------------------------------------
+    |                                   |             CLUSTERING RESULT              |
+    ----------------------------------------------------------------------------------
+    |                                   | Same Cluster     |     Different Cluster   |
+    ----------------------------------------------------------------------------------
+    |              | Same Cluster       |      M11         |           M10           |
+    | GROUND TRUTH |                    |                  |                         |
+    |              | Different Cluster  |      M01         |           M00           |
+    ----------------------------------------------------------------------------------
+    """
     agree_disagree = np.zeros((2,2))
     
     for i in range(0,no_genes):
@@ -52,53 +69,71 @@ def calcExtIndex(clusters):
     return jaccard, rand
 
 
-def generatePlot(clusterList):
+# Function to reduce the dimensions of the data using PCA and plot the clusters
+def generatePlot(clusterList, count_clusters):
     pca = PCA(n_components=2)
     pca.fit(points)
     reducedPoints = pca.transform(points)
     
+    labels = []
+    for i in range(0,count_clusters):
+        labels.append(i)
+
+    colors = [plt.cm.jet(float(i)/(max(labels))) for i in labels]
+    
+    for i, l in enumerate(labels):
+       # plot_list = [(plt.plot(plot_dict_x[l],plot_dict_y[l],'+', c = plt.cm.jet(float(i)/(len(labels))), label = str(l)))]
+       x = [reducedPoints[j][0] for j in range(len(reducedPoints)) if int(clusterList[j]) == (l)]
+       y = [reducedPoints[j][1] for j in range(len(reducedPoints)) if int(clusterList[j]) == (l)]
+       plt.plot(x, y,'wo', c= colors[i], label = str(l), markersize=9, alpha=0.75)
+       
+      
+    
     fig_size = plt.rcParams["figure.figsize"]
-     
     # Set figure width to 12 and height to 9
     fig_size[0] = 12
     fig_size[1] = 9
     plt.rcParams["figure.figsize"] = fig_size
     
-    plt.scatter(reducedPoints[:, 0], reducedPoints[:, 1], c=clusterList, alpha=0.5)
-    plt.title('K - Means Clustering')
+    #plt.scatter(reducedPoints[:, 0], reducedPoints[:, 1], c=clusterList, alpha=0.5)
+    plt.title('K Means Clustering')
+    plt.legend(numpoints=1)
     plt.grid(True)
     plt.show()
 
 
 
 #Read file and store into a 2d array
-with open("cho.txt") as textFile:
+filename = input("Enter the name of the file: ")
+with open(filename) as textFile:
     lines = [line.split() for line in textFile]
     
 #Convert 2d array into np array    
 input_data = np.asarray(lines)
 
+# Extract the points from input
 points = input_data[:,2:len(input_data[0])]
 points = np.mat(points,dtype=float)
 
+# Extract the ground truth from the input
 ground_truth = input_data[:,1]
-#ground_truth = np.mat(ground_truth,dtype=float)
-#print(ground_truth)
+
 
 no_genes = len(input_data)
 no_attr = np.shape(points)[1]
-k = 5
+k = input("Enter the number of clusters: ")
+k = int(k)
+
+# Randomly select the initial k centroids from the input data 
 centroids = []
 random_set = set()
 while len(random_set)<k:
     no_random = random.randint(0,no_genes)
     if no_random not in random_set:
         centroids.append(points[no_random].tolist())
-        #print(no_random)
     random_set.add(no_random)
 
-#print(np.asmatrix(np.array(centroids)))
-
+# Calculate new centroids and loop until new centroids are not equal to the old centroid.
 while True:
     dist = np.zeros((no_genes,k))
     
@@ -125,10 +160,18 @@ while True:
     else:
         centroids = new_centroids
     
-
+# Print all the external indexs and clusters along with their centroids and the members.
 jaccard , rand = calcExtIndex(clusters)
-generatePlot(clusters)
-
-
-print("Jaccard = ", jaccard)
-print("Rand = " ,rand)
+generatePlot(clusters,k)
+print("JACCARD: ", jaccard)
+print("RAND: " ,rand)
+for i in range(k):
+    print()
+    print("CLUSTER ID: ",i)
+    print("CENTROID: ",centroids[i])
+    string = ""
+    for j in range(len(clusters)):
+        if clusters[j]==i:
+            string = string+str(j)+" "
+    print("GENE IDs: ",string)
+    

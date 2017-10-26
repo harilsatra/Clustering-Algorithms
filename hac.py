@@ -72,25 +72,40 @@ def calcExtIndex(clusters, ground_truth):
     return jaccard,rand, clusterList
 
 
-def generatePlot(clusterList):
+def generatePlot(clusterList, count_clusters):
     pca = PCA(n_components=2)
     pca.fit(points)
     reducedPoints = pca.transform(points)
     
+    labels = []
+    for i in range(1,count_clusters+1):
+        labels.append(i)
+
+    colors = [plt.cm.jet(float(i)/(max(labels))) for i in labels]
+    
+    for i, l in enumerate(labels):
+       # plot_list = [(plt.plot(plot_dict_x[l],plot_dict_y[l],'+', c = plt.cm.jet(float(i)/(len(labels))), label = str(l)))]
+       x = [reducedPoints[j][0] for j in range(len(reducedPoints)) if int(clusterList[j]) == (l)]
+       y = [reducedPoints[j][1] for j in range(len(reducedPoints)) if int(clusterList[j]) == (l)]
+       plt.plot(x, y,'wo', c= colors[i], label = str(l), markersize=9, alpha=0.75)
+       
+      
+    
     fig_size = plt.rcParams["figure.figsize"]
-     
     # Set figure width to 12 and height to 9
     fig_size[0] = 12
     fig_size[1] = 9
     plt.rcParams["figure.figsize"] = fig_size
     
-    plt.scatter(reducedPoints[:, 0], reducedPoints[:, 1], c=clusterList, alpha=0.5)
-    plt.title('Hierarchical Agglomerative Clustering')
+    #plt.scatter(reducedPoints[:, 0], reducedPoints[:, 1], c=clusterList, alpha=0.5)
+    plt.title('K Means Clustering')
+    plt.legend(numpoints=1)
     plt.grid(True)
     plt.show()
     
 #Read file and store into a 2d array
-with open("cho.txt") as textFile:
+filename = input("Enter the filename with extension: ")
+with open(filename) as textFile:
     lines = [line.split() for line in textFile]
     
 #Convert 2d array into np array    
@@ -102,7 +117,8 @@ no_genes = len(input_data)
 no_attr = np.shape(points)[1]
 dist_mat = euclidean_distances(points,points)
 
-no_clusters = 5
+no_clusters = input("Enter the no of clusters: ")
+no_clusters = int(no_clusters)
 
 clusters = []
 
@@ -116,7 +132,7 @@ generateClusters(dist_mat, clusters, no_clusters)
 jaccard, rand, clusterList = calcExtIndex(clusters, ground_truth)
 
 
-generatePlot(clusterList)
+generatePlot(clusterList,no_clusters)
 
 print("Jaccard = ",jaccard)
 print("Rand = ",rand)
