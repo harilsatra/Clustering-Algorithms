@@ -82,7 +82,6 @@ def generatePlot(clusterList, count_clusters):
     colors = [plt.cm.jet(float(i)/(max(labels))) for i in labels]
     
     for i, l in enumerate(labels):
-       # plot_list = [(plt.plot(plot_dict_x[l],plot_dict_y[l],'+', c = plt.cm.jet(float(i)/(len(labels))), label = str(l)))]
        x = [reducedPoints[j][0] for j in range(len(reducedPoints)) if int(clusterList[j]) == (l)]
        y = [reducedPoints[j][1] for j in range(len(reducedPoints)) if int(clusterList[j]) == (l)]
        plt.plot(x, y,'wo', c= colors[i], label = str(l), markersize=9, alpha=0.75)
@@ -95,7 +94,6 @@ def generatePlot(clusterList, count_clusters):
     fig_size[1] = 9
     plt.rcParams["figure.figsize"] = fig_size
     
-    #plt.scatter(reducedPoints[:, 0], reducedPoints[:, 1], c=clusterList, alpha=0.5)
     plt.title('K Means Clustering')
     plt.legend(numpoints=1)
     plt.grid(True)
