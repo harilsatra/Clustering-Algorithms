@@ -17,6 +17,8 @@ Steps to execute kmeans.py:
 3) Run the keamns.py file using an ide or through the console (python kmeans.py).
 4) The script will prompt you to enter the file name. Enter the input file name.
 5) The script will then prompt you to enter the number of clusters.
+6) The script will then prompt you to enter the number of iterations.
+7) The script will then prompt you to enter the initial cluster centers.
 6) The jaccard index and rand index will be displayed and the plot of the cluster assignment will also be displayed.
 
 **************************************************
@@ -92,8 +94,8 @@ Steps to execute the map-reduce kmeans:
 
 	hadoop jar kmeans.jar Kmeans ~/input/cho.txt ~/output 5
 
-10) The jaccard index will be displayed on the console along with the following information for each cluster:
+10) The jaccard index will be desplayed on the console along with the following information for each cluster:
 
-	a. Cluster Id
+	a. CLuster Id
 	b. Centroid for that Cluster Id
 	c. Genes that belong to that Cluster Id

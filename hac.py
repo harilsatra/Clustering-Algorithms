@@ -1,4 +1,3 @@
-
 import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.decomposition import PCA
@@ -32,6 +31,7 @@ def generateClusters(dist_mat, clusters, no_clusters):
         #merge the 2 closest clusters
         clusters[cluster1].extend(clusters[cluster2])
         clusters.pop(cluster2)
+    #print(clusters)
        
 # Generate Incidence Matrices from the ground truth and the cluster results that we get.
 def calcExtIndex(clusters, ground_truth):
@@ -118,7 +118,7 @@ def generatePlot(clusterList, count_clusters):
     fig_size[1] = 9
     plt.rcParams["figure.figsize"] = fig_size
     
-    plt.title('K Means Clustering')
+    plt.title('Hierarchical Agglomerative Clustering')
     plt.legend(numpoints=1)
     plt.grid(True)
     plt.show()

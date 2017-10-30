@@ -7,7 +7,6 @@ Created on Fri Oct 20 18:10:47 2017
 """
 
 import numpy as np
-import random
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
@@ -102,7 +101,7 @@ def generatePlot(clusterList, count_clusters):
 
 
 #Read file and store into a 2d array
-filename = input("Enter the name of the file: ")
+filename = input("Enter the filename with extension: ")
 with open(filename) as textFile:
     lines = [line.split() for line in textFile]
     
@@ -116,23 +115,30 @@ points = np.mat(points,dtype=float)
 # Extract the ground truth from the input
 ground_truth = input_data[:,1]
 
-
 no_genes = len(input_data)
 no_attr = np.shape(points)[1]
+
+#Ask the user to input the number of clusters
 k = input("Enter the number of clusters: ")
 k = int(k)
 
-# Randomly select the initial k centroids from the input data 
-centroids = []
-random_set = set()
-while len(random_set)<k:
-    no_random = random.randint(0,no_genes)
-    if no_random not in random_set:
-        centroids.append(points[no_random].tolist())
-    random_set.add(no_random)
+#Ask the user to input the number of iterations
+iterations = int(input("Enter the number of iterations: "))
 
-# Calculate new centroids and loop until new centroids are not equal to the old centroid.
-while True:
+#Ask the user to input the k initial centers
+centroids = []
+for i in range(k):
+    initial_center = input("Enter the initial center no "+str(i+1)+": ")
+    if int(initial_center) < 1 or int(initial_center) > no_genes:
+        print()
+        print("ERROR: Please enter in range 1 to "+str(no_genes))
+        initial_center = input("Enter the initial center no "+str(i+1)+": ")
+    centroids.append(points[int(initial_center)-1].tolist())
+
+# Calculate new centroids and loop until new centroids are not equal to the old centroid
+# or until the max number of iterations have been processed.
+while iterations != 0:
+    
     dist = np.zeros((no_genes,k))
     
     for i in range(0,no_genes):
@@ -140,7 +146,8 @@ while True:
             dist[i][j] = np.linalg.norm(points[i]-centroids[j])
     
     clusters = np.argmin(dist,axis=1)
-    
+    #print([i for i in clusters])
+    #print()
     new_centroids = np.zeros((k,no_attr))
     no_points = np.zeros(k)
     
@@ -157,19 +164,12 @@ while True:
         break
     else:
         centroids = new_centroids
+    iterations -= 1
     
-# Print all the external indexs and clusters along with their centroids and the members.
+# Print all the external indexs.
 jaccard , rand = calcExtIndex(clusters)
 generatePlot(clusters,k)
 print("JACCARD: ", jaccard)
 print("RAND: " ,rand)
-for i in range(k):
-    print()
-    print("CLUSTER ID: ",i)
-    print("CENTROID: ",centroids[i])
-    string = ""
-    for j in range(len(clusters)):
-        if clusters[j]==i:
-            string = string+str(j)+" "
-    print("GENE IDs: ",string)
+#print("ITERATION: ",iteration)
     
